@@ -1,0 +1,47 @@
+resources:
+  - name: wled-release
+    icon: github-circle
+    type: github-release
+    source:
+      owner: Aircoookie
+      repository: wled
+
+deploy: &deploy_controller
+  platform: linux
+  image_resource:
+    type: docker-image
+    source:
+      repository: appropriate/curl
+  inputs:
+    - name: wled-release
+  run:
+    path: sh
+    args:
+      - -ec
+      - |
+        firmware_name=$(ls wled-release/ | grep "ESP8266.bin")
+        echo "updating ${TARGET} with ${firmware_name}"
+        curl -XPOST --digest \
+         -H "Content-Type: multipart/form-data" \
+         -F "filename=@wled-release/${firmware_name}" \
+         -F "name=\"upgrade\"" http://${TARGET}/update
+        echo "done"
+    
+
+jobs:
+- name: deploy release to controllers
+  serial: true
+  plan:
+  - get: wled-release
+
+  - in_parallel:
+    - task: upload to bath tub 🛀
+      params:
+        TARGET: ((controller.bath_tub))
+      config:
+        <<: *deploy_controller
+    - task: upload to shower 🚿
+      params:
+        TARGET: ((controller.shower))
+      config:
+        <<: *deploy_controller
