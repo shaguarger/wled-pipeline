@@ -2,6 +2,7 @@ resources:
   - name: wled-release
     icon: github-circle
     type: github-release
+    check_every: 60m
     source:
       owner: Aircoookie
       repository: wled
